@@ -7,19 +7,8 @@ var mysql = require('mysql');
 module.exports = {
     searchHubLogs: searchHubLogs,
     getEnvironments: getEnvironments,
-    getHubConsumers: getHubConsumers,
-    getSlogans: getSlogans
+    getHubConsumers: getHubConsumers
 };
-
-var configg = {
-    "name": "HUBA1",
-    "host": "localhost",
-    "user": "root",
-    "password": "Iluv2java2",
-    "database": "ema"
-}
-
-//var s = searchHubLogs(configg, "", function(){});
 
 function isNotNullOrUndefined(value)
 {
@@ -28,7 +17,9 @@ function isNotNullOrUndefined(value)
 
 function searchHubLogs(config, req, callback)
 {
+    console.log(JSON.stringify(config));
     //Replace this with a map?
+    //env, start, noRecords, requestId, serviceId, sourceName, severity, logCode, userId, latestDate, requestMessage, logMessage, errorsOnly, includeOlbPing, apps
     var startPos = (req.swagger.params.start.value) ? req.swagger.params.start.value:0;
     var resultSetSize = (req.swagger.params.noRecords.value) ? req.swagger.params.noRecords.value:200;
     var reqID = (req.swagger.params.requestId.value) ? req.swagger.params.requestId.value:null;
@@ -36,7 +27,7 @@ function searchHubLogs(config, req, callback)
     var srcName = isNotNullOrUndefined(req.swagger.params.sourceName.value) ? "'" + req.swagger.params.sourceName.value + "'":null;
     var user = isNotNullOrUndefined(req.swagger.params.userId.value) ? "'" + req.swagger.params.userId.value + "'":null;
     var sev = isNotNullOrUndefined(req.swagger.params.severity.value) ? "'" +  req.swagger.params.severity.value + "'":null;
-    var cde = isNotNullOrUndefined(req.swagger.params.code.value) ? "'" + req.swagger.params.code.value + "'":null;
+    var cde = isNotNullOrUndefined(req.swagger.params.logCode.value) ? "'" + req.swagger.params.logCode.value + "'":null;
     var date = isNotNullOrUndefined(req.swagger.params.latestDate.value) ? "'" + req.swagger.params.latestDate.value + "'":null;
     var appss = isNotNullOrUndefined(req.swagger.params.apps.value) ? "'" + req.swagger.params.apps.value + "'":null;
     //console.log(appss.length);
@@ -48,68 +39,80 @@ function searchHubLogs(config, req, callback)
     var log = isNotNullOrUndefined(req.swagger.params.logMessage.value) ? "'" + req.swagger.params.logMessage.value + "'":null;
     var errs = (req.swagger.params.errorsOnly.value) ? req.swagger.params.errorsOnly.value:0;
     var ping = (req.swagger.params.includeOlbPing.value) ? req.swagger.params.includeOlbPing.value:0;
-
     var connection = mysql.createConnection(config);
-    connection.connect();
-    var request = "CALL pGetHubLogs(" + startPos + ", " + resultSetSize + ", " + reqID + ", " +
-        srvID + ", " + srcName + ", " + user + ", " + sev + ", " + cde + ", " +
-        date + ", " + appss + ", " + reqMess + ", " + log +", " + errs + ", " +
-        ping + ")";
-    //console.log(request);
-    connection.query(request, function(err, rows, fields)
-
-    //pGetHubLogs`(in startIndex integer, resultSizeLimit integer,
-    //requestId integer, serviceId integer, sourceName varchar(50), userId varchar(30),
-    //severityCode varchar(30), logCode varchar(40), requestDate DATE, apps varchar(50),
-    //requestMessage varchar(50), logMessage varchar(50), errorsOnly bit, includeOlbPing bit)
-
-    {
-        if(err)
-        {
-            callback(err, null);
+    connection.connect(function(err){
+        if(err){
+            console.error('Error Connecting to database: ' + err.stack);
+            return;
         }
-        else
+        var request = "CALL pGetHubLogs(" + startPos + ", " + resultSetSize + ", " + reqID + ", " +
+            srvID + ", " + srcName + ", " + user + ", " + sev + ", " + cde + ", " +
+            date + ", " + appss + ", " + reqMess + ", " + log +", " + errs + ", " +
+            ping + ")";
+        connection.query(request, function(err, rows, fields)
+
         {
-            return callback(null, rows[0]);
-        }
+            if(err)
+            {
+                callback(err, null);
+            }
+            else
+            {
+                return callback(null, rows[0]);
+            }
+        });
+        connection.end();
     });
-    connection.end();
 }
 
 function getHubConsumers(config, callback)
 {
+    console.log("b");
     var connection = mysql.createConnection(config);
-    connection.connect();
-    connection.query("CALL pGetApplicationConsumers()", function(err, rows, fields)
-    {
-        if(err)
-        {
-            callback(err, null);
+    connection.connect(function(err){
+        if(err){
+            console.error('Error Connecting to database: ' + err.stack);
+            return;
         }
-        else
+        connection.query("CALL pGetApplicationConsumers()", function(err, rows, fields)
         {
-            return callback(null, rows[0]);
-        }
+            if(err)
+            {
+                callback(err, null);
+            }
+            else
+            {
+                console.log(rows[0]);
+                return callback(null, rows[0]);
+            }
+        });
+        connection.end();
     });
-    connection.end();
 }
 
 function getEnvironments(config, callback)
 {
+    console.log("a2");
     var connection = mysql.createConnection(config);
-    connection.connect();
-    connection.query("CALL pGetAllEnvironments()", function(err, rows, fields)
-    {
-        if(err)
-        {
-            callback(err, null);
+    connection.connect(function(err){
+        if(err){
+            console.error('Error Connecting to database: ' + err.stack);
+            return;
         }
-        else
+        connection.query("CALL pGetAllEnvironments()", function(err, rows, fields)
         {
-            return callback(null, rows[0]);
-        }
+            if(err)
+            {
+                callback(err, null);
+            }
+            else
+            {
+                console.log(rows[0]);
+                return callback(null, rows[0]);
+            }
+        });
+        connection.end();
     });
-    connection.end();
 }
 
 function createPooledConnection()
@@ -125,21 +128,4 @@ function createPooledConnection()
             console.log("Code: " + error.code + "\nErrorno: " + error.errno + "\nSQLState: " + error.sqlState);
         }
     });
-}
-
-function getSlogans(config, callback)
-{
-    var conn = mysql.createConnection(config);
-    conn.connect();
-    conn.query("CALL pGetSlogans()", function(err, rows){
-        if(err)
-        {
-            callback(err, null);
-        }
-        else
-        {
-            return callback(null, rows[0]);
-        }
-    });
-    conn.end();
 }

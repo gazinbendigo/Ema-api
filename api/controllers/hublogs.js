@@ -10,7 +10,7 @@ var datasource = require.main.require('./api/helpers/mssql-datasource.js');
 var mysqlds = require.main.require('./api/helpers/mysql-datasource.js');
 var EMA_DB = "EMA";
 
-var isSQLServer = true;
+var isSQLServer = false;
 
 module.exports = {
     getHublogs: getHublogs,
@@ -28,7 +28,7 @@ module.exports = {
  */
 function getHublogs(req, res, next) {
     //variables defined in the Swagger document can be referenced using req.swagger.params.{parameter_name}
-
+    console.log("1.");
     var env = req.swagger.params.env.value;
     if(!env)
     {
@@ -54,15 +54,23 @@ function getHublogs(req, res, next) {
     }
     else {
         //MY SQL - Development environment
+        console.log("2.");
         dbConfig = dsConfig.MYSQL;
-        var config = usHelper.findWhere(dbConfig, {name: "MYSQL"});
+        console.log(dbConfig);
+        if(!usHelper.contains(dbConfig, env)) {
+            env = "EMA_DEV";
+        }
+        var config = usHelper.findWhere(dbConfig, {name: env});
         mysqlds.searchHubLogs(config, req, function(err, result){
-            if (!err) {
+            if (!err)
+            {
+                console.log("3.");
                 res.json(result);
             }
             else
             {
                 //console.log(JSON.stringify(err));
+                console.log(err);
                 res.json(err);
             }
         });
@@ -93,7 +101,11 @@ function getEnvironments(req, res)
     else {
         //MY SQL
         dbConfig = dsConfig.MYSQL;
-        var config = usHelper.findWhere(dbConfig, {name: "MYSQL"});
+        if(!usHelper.contains(dbConfig, env)) {
+            env = "EMA_DEV";
+        }
+        console.log("a");
+        var config = usHelper.findWhere(dbConfig, {name: env});
         mysqlds.getEnvironments(config, function(err, result){
             if (!err) {
                 res.json(result);
@@ -136,7 +148,10 @@ function getApplications(req, res)
     else {
         //MY SQL
         dbConfig = dsConfig.MYSQL;
-        var config = usHelper.findWhere(dbConfig, {name: "MYSQL"});
+        if(!usHelper.contains(dbConfig, env)) {
+            env = "EMA_DEV";
+        }
+        var config = usHelper.findWhere(dbConfig, {name: env});
         mysqlds.getHubConsumers(config, function(err, result){
             if (!err) {
                 res.json(result);

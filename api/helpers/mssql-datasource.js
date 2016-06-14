@@ -9,7 +9,6 @@ module.exports = {
     searchHubLogs: searchHubLogs,
     getEnvironments: getEnvironments,
     getHubConsumers: getHubConsumers,
-    getSlogans: getSlogans,
     getServicePerformanceStats: getServicePerformanceStats
 };
 
@@ -173,34 +172,6 @@ var errorMessage = function buildErrorMessage(err){
     return message;
 }
 
-//Currently Not Used and might not be either - 18/02/2016
-function getSlogans(config, callback)
-{
-    var conn = new sql.Connection(datasource, function(err){
-        if(err !== null) {
-            callback(err, 'Connection to db failed');
-        }
-        else {
-            var request = new sql.Request(conn);
-            request.execute("pGetSlogans", function(err, recordsets, returnValue) {
-                if(!err === null)
-                {
-                    var no = (err.number !== null) ? err.number:0;
-                    var name = (err.name !== null) ? err.name:"";
-                    var code = (err.code !== null) ? err.code:"";
-                    var message = (err.message != null) ? err.message:"";
-                    var errorMessage = "Fatal Error occured.\nNumber: " + no + "\nName: " + name + "\nCode: " + code + "\nMessage: " + message;
-                    //console.log(callback, errorMessage);
-                    callback(err, errorMessage);
-                }
-                else
-                {
-                    callback(null, recordsets[0]);
-                }
-                conn.close();
-            });
-        }
-    });
-}
+
 
 
